@@ -38,8 +38,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
+          activate-environment: true
       - name: Install
-        run: uv pip install --system -e ".[dev]"
+        run: uv pip install -e ".[dev]"
       - name: Unit tests with coverage
         run: >
           pytest -m "not integration"
@@ -63,8 +64,9 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.13"
+          activate-environment: true
       - name: Install
-        run: uv pip install --system -e ".[dev]"
+        run: uv pip install -e ".[dev]"
       # ubuntu 러너에는 Docker가 이미 있어서 Testcontainers가 바로 동작한다
       - name: Integration tests (Testcontainers)
         env:
