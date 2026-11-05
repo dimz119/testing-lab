@@ -1,5 +1,6 @@
 """EP2 · 가격 계산. 순수 함수라서 단위 테스트하기 가장 좋은 곳이다."""
 
+import os
 from decimal import ROUND_HALF_UP, Decimal
 
 from shop.discounts import DiscountPolicy, NoDiscount
