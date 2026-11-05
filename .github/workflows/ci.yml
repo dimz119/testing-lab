@@ -1,0 +1,78 @@
+# EP1 · 테스트 피라미드를 CI 단계로 옮긴다.
+# 빠른 것(lint, 단위)이 먼저 실패하게 하고, 느린 것(통합)은 그다음에 돈다.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 같은 PR에 새 커밋이 오면 이전 실행은 취소한다
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Ruff
+        run: uvx ruff check .
+      - name: Ruff format check
+        run: uvx ruff format --check .
+
+  unit:
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        run: uv pip install --system -e ".[dev]"
+      - name: Unit tests with coverage
+        run: >
+          pytest -m "not integration"
+          --cov --cov-report=term-missing --cov-report=xml
+          --cov-fail-under=90
+          --junitxml=reports/unit.xml
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-reports-${{ matrix.python-version }}
+          path: |
+            reports/
+            coverage.xml
+
+  integration:
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - name: Install
+        run: uv pip install --system -e ".[dev]"
+      # ubuntu 러너에는 Docker가 이미 있어서 Testcontainers가 바로 동작한다
+      - name: Integration tests (Testcontainers)
+        env:
+          REQUIRE_DOCKER: "1"
+        run: pytest -m integration -v --junitxml=reports/integration.xml
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-reports
+          path: reports/

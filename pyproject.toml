@@ -1,0 +1,46 @@
+[project]
+name = "testing-lab"
+version = "0.1.0"
+description = "테스트 전략과 리팩터링 실습 리포 — 온라인 서점 주문 도메인"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.27",
+    "psycopg[binary]>=3.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=5.0",
+    "testcontainers[postgres]>=4.15",
+    "ruff>=0.6",
+]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: 실제 DB 등 외부 자원이 필요한 느린 테스트 (Docker 필요)",
+]
+
+[tool.coverage.run]
+source = ["shop"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
