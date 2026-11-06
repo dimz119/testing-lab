@@ -11,7 +11,7 @@ SHIPPING_FEE = Decimal("3000")
 
 def shipping_fee(amount_after_discount: Decimal) -> Decimal:
     # 경계값: 정확히 50,000원이면 무료 배송
-    if amount_after_discount >= FREE_SHIPPING_THRESHOLD:
+    if amount_after_discount > FREE_SHIPPING_THRESHOLD:
         return Decimal("0")
     return SHIPPING_FEE
 
