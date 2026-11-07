@@ -57,6 +57,5 @@ class CheckoutService:
     def checkout(self, order: Order) -> PaymentResult:
         total = calculate_total(order, policy_for(order))
         # 같은 주문을 두 번 결제하지 않도록 주문 ID를 멱등 키로 쓴다
-        result = self.gateway.charge(order.order_id, total, idempotency_key=order.order_id)
-        self.repository.save(order, total, result.payment_id)
-        return result
+        self.repository.save(order, total, payment_id="pending")
+        return self.gateway.charge(order.order_id, total, idempotency_key=order.order_id)
