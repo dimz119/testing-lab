@@ -13,7 +13,7 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS orders (
     order_id    TEXT PRIMARY KEY,
     customer_id TEXT NOT NULL,
-    total       NUMERIC(12, 0) NOT NULL CHECK (total >= 0),
+    total       NUMERIC(12, 0) NOT NULL,
     payment_id  TEXT NOT NULL UNIQUE,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 )
