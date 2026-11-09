@@ -72,9 +72,18 @@ COUPONS: dict[str, DiscountPolicy] = {
 }
 
 
-def policy_for(order: Order) -> DiscountPolicy:
-    """Factory: 주문 정보를 보고 적용할 정책을 만든다."""
+def policy_for(
+    order: Order,
+    *,
+    is_first_order: Callable[[str], bool] | None = None,
+) -> DiscountPolicy:
+    """Factory: 주문 정보를 보고 적용할 정책을 만든다.
+
+    is_first_order를 넘기면 첫 주문 할인도 후보에 넣는다. 안 넘기면 기존과 똑같이 동작한다.
+    """
     candidates: list[DiscountPolicy] = []
+    if is_first_order is not None:
+        candidates.append(FirstOrderOff(is_first_order))
     if order.is_member:
         candidates.append(PercentOff(5))
     if order.coupon_code is not None:

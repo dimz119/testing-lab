@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 
-from shop.discounts import BestOf, FirstOrderOff, PercentOff
+from shop.discounts import BestOf, FirstOrderOff, NoDiscount, PercentOff, policy_for
 from shop.pricing import calculate_total
 
 
@@ -45,3 +45,33 @@ def test_calculate_total_caps_discount_at_subtotal(make_order):
     # 1,000원짜리 주문에 3,000원 할인 → 0원 + 배송비 3,000원
     order = make_order(amount="1000")
     assert calculate_total(order, FirstOrderOff(lambda _: True)) == Decimal("3000")
+
+
+# Factory 연결: is_first_order를 넘길 때만 첫 주문 할인이 후보가 된다
+def test_factory_applies_first_order_discount(make_order):
+    order = make_order(amount="20000", customer_id="NEW")
+    policy = policy_for(order, is_first_order=lambda customer_id: customer_id == "NEW")
+    assert policy.discount_for(order) == Decimal("3000")
+
+
+def test_factory_gives_returning_customer_nothing(make_order):
+    order = make_order(amount="20000")
+    policy = policy_for(order, is_first_order=lambda _: False)
+    assert policy.discount_for(order) == Decimal("0")
+
+
+def test_factory_without_lookup_ignores_first_order(make_order):
+    # 기존 호출 방식(policy_for(order))은 그대로 할인 없음
+    assert isinstance(policy_for(make_order()), NoDiscount)
+
+
+def test_factory_picks_best_of_first_order_member_and_coupon(make_order):
+    order = make_order(amount="40000", coupon="SAVE5000", member=True)
+    # 첫 주문 3,000 · 회원 5% 2,000 · 쿠폰 5,000 → 쿠폰
+    assert policy_for(order, is_first_order=lambda _: True).discount_for(order) == Decimal("5000")
+
+
+def test_factory_first_order_beats_member_discount(make_order):
+    order = make_order(amount="20000", member=True)
+    # 첫 주문 3,000 > 회원 5% 1,000
+    assert policy_for(order, is_first_order=lambda _: True).discount_for(order) == Decimal("3000")
