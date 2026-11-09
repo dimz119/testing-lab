@@ -1,5 +1,6 @@
 """EP5 · Strategy + Factory. 할인 규칙을 if 문이 아니라 객체로 갈아 끼운다."""
 
+from collections.abc import Callable
 from decimal import Decimal
 from typing import Protocol
 
@@ -33,6 +34,23 @@ class FixedAmountOff:
     def discount_for(self, order: Order) -> Decimal:
         # 최소 주문 금액을 못 넘으면 할인 없음
         if order.subtotal < self.minimum_order:
+            return Decimal("0")
+        return self.amount
+
+
+class FirstOrderOff:
+    """첫 주문이면 정액 할인. 첫 주문 여부는 밖에서 주입받는다 (Dependency Inversion)."""
+
+    def __init__(
+        self,
+        is_first_order: Callable[[str], bool],
+        amount: Decimal = Decimal("3000"),
+    ) -> None:
+        self.is_first_order = is_first_order
+        self.amount = amount
+
+    def discount_for(self, order: Order) -> Decimal:
+        if not self.is_first_order(order.customer_id):
             return Decimal("0")
         return self.amount
 
