@@ -56,7 +56,7 @@ def _shipping(amount: float) -> int:
     # 결제할 금액이 0원이면 배송비도 받지 않는다 (레거시 동작 유지)
     if amount == 0:
         return 0
-    if amount >= FREE_SHIPPING_THRESHOLD:
+    if amount > FREE_SHIPPING_THRESHOLD:
         return 0
     return SHIPPING_FEE
 
